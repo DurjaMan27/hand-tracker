@@ -8,6 +8,7 @@ import logging
 from collections import deque
 from types import SimpleNamespace
 from datetime import datetime, timedelta
+from object_parsing import Interactive
 
 class RunGestures():
 
@@ -22,7 +23,7 @@ class RunGestures():
       ]
     )
 
-    self.interactive = interactive_obj
+    self.interactive: Interactive = interactive_obj
 
     self.orientation_history = deque(maxlen=100)
     self.zoom_history = deque(maxlen=50)
@@ -36,6 +37,12 @@ class RunGestures():
 
     self.MOTION_STOP_THRESHOLD = 0.065
     self.GRACE_PERIOD = 1.0
+
+  def update_visualization(self, action_type: str, zoom_speed = 0.0, rotation_axis = 0.0, angle_rad = 0.0):
+    if action_type == "zoom":
+      self.interactive.zoom(zoom_speed)
+    elif action_type == "rotate":
+      self.interactive.rotate(rotation_axis, angle_rad)
 
 
   def run_program(self):
@@ -128,9 +135,11 @@ class RunGestures():
                 delta_dist = d2 - d1
                 delta_time = t2 - t1 if t2 != t1 else 1e-6
 
-                speed = abs(delta_dist / delta_time)
+                speed = delta_dist / delta_time
 
-                if speed > self.MOTION_STOP_THRESHOLD:
+                self.update_visualization("zooming", zoom_speed = speed)
+
+                if abs(speed) > self.MOTION_STOP_THRESHOLD:
                   self.last_active_time = frame_time
                 elif frame_time - self.last_active_time > self.GRACE_PERIOD:
                   self.zooming = 0
@@ -151,12 +160,21 @@ class RunGestures():
                 delta_angle = a2 - a1
                 delta_time = t2 - t1 if t2 != t1 else 1e-6
 
-                angular_speed = abs(delta_angle / delta_time)
+                angular_speed = delta_angle / delta_time
+                incremental_angle = angular_speed * (t2 - t1)
 
-                print(f"Angular Speed: {angular_speed:.4f} rad/s")
-                print(f"Current Rotation Angle: {math.degrees(angle):.2f} degrees")
+                v1_3d = np.array([curr_vec[0], curr_vec[1], 0])
+                v2_3d = np.array([self.initial_vec[0], self.initial_vec[1], 0])
+                axis = np.cross(v1_3d, v2_3d)
+                axis_norm = np.linalg.norm(axis)
+                if axis_norm < 1e-6:
+                  axis = np.array[0, 0, 1]
+                else:
+                  axis = axis / axis_norm
 
-                if angular_speed > self.MOTION_STOP_THRESHOLD:
+                self.update_visualization("rotate", rotation_axis = axis, angle = incremental_angle)
+
+                if abs(angular_speed) > self.MOTION_STOP_THRESHOLD:
                   self.last_active_time = frame_time
                 elif frame_time - self.last_active_time > self.GRACE_PERIOD:
                   self.rotating = 0
