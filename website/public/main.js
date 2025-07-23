@@ -29,7 +29,6 @@ async function setupInteractive(scene, renderer, camera) {
   }
 }
 
-// Function to load OBJ model data
 async function loadObjMeshDataFromPath(objPath) {
   return new Promise((resolve, reject) => {
     const loader = new THREE.OBJLoader();
@@ -44,7 +43,6 @@ async function loadObjMeshDataFromPath(objPath) {
   });
 }
 
-// Function to create Three.js essentials
 function initThree() {
   const scene = new THREE.Scene();
 

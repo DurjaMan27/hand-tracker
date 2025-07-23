@@ -63,6 +63,47 @@ export class RunGestures {
     await this.camera.start();
   }
 
+  start() {
+    // 1. Set up canvas for drawing
+    this.canvasElement = document.createElement('canvas');
+    this.canvasElement.width = this.videoElement.videoWidth || 640;
+    this.canvasElement.height = this.videoElement.videoHeight || 480;
+    this.videoElement.parentNode.insertBefore(this.canvasElement, this.videoElement.nextSibling);
+    this.canvasCtx = this.canvasElement.getContext('2d');
+
+    // 2. Set up logger
+    this.logger = new LogManager(this.logElement);
+
+    // 3. Set up MediaPipe Hands
+    this.hands = new Hands({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    this.hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.8,
+      minTrackingConfidence: 0.8
+    });
+
+    this.hands.onResults(this.onResults.bind(this));
+
+    // 4. Set up video stream and continuously process frames
+    const camera = new Camera(this.videoElement, {
+      onFrame: async () => {
+        await this.hands.send({ image: this.videoElement });
+      },
+      width: this.canvasElement.width,
+      height: this.canvasElement.height
+    });
+
+    camera.start();
+
+    // Optional debug log
+    this.logger.addLog("RunGestures started");
+  }
+
+
   onResults(results) {
     const frameTime = performance.now() / 1000; // Convert to seconds
 
