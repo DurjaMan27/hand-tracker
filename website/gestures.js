@@ -9,7 +9,6 @@ class RunGestures {
     this.canvasElement = null;
     this.canvasCtx = null;
 
-    // History tracking (using arrays instead of deque)
     this.orientationHistory = [];
     this.zoomHistory = [];
     this.rotationHistory = [];
@@ -18,23 +17,19 @@ class RunGestures {
     this.maxRotationHistory = 50;
     this.logger = new LogManager('gesture-log')
 
-    // State variables
     this.lastActiveTime = null;
     this.initialVec = null;
     this.closedFist = false;
     this.zooming = 0;
     this.rotating = 0;
 
-    // Constants
     this.MOTION_STOP_THRESHOLD = 0.065;
     this.GRACE_PERIOD = 1.0;
 
     this.initializeMediaPipe();
   }
 
-  // Initialize MediaPipe Hands
   async initializeMediaPipe() {
-    // Load MediaPipe Hands
     this.hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
@@ -49,13 +44,11 @@ class RunGestures {
     this.hands.onResults(this.onResults.bind(this));
   }
 
-  // Setup camera and canvas
   async setupCamera(videoElement, canvasElement) {
     this.videoElement = videoElement;
     this.canvasElement = canvasElement;
     this.canvasCtx = canvasElement.getContext('2d');
 
-    // Setup camera
     this.camera = new Camera(videoElement, {
       onFrame: async () => {
         await this.hands.send({ image: videoElement });
@@ -66,40 +59,29 @@ class RunGestures {
     await this.camera.start();
   }
 
-  // MediaPipe results callback
   onResults(results) {
     const frameTime = performance.now() / 1000; // Convert to seconds
 
-    // Clear canvas
     this.canvasCtx.save();
     this.canvasCtx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
-
-    // Draw the video frame
     this.canvasCtx.drawImage(results.image, 0, 0, this.canvasElement.width, this.canvasElement.height);
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       const handLandmarks = results.multiHandLandmarks[0];
 
-      // Draw hand landmarks
       this.drawConnectors(this.canvasCtx, handLandmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 5 });
       this.drawLandmarks(this.canvasCtx, handLandmarks, { color: '#FF0000', lineWidth: 2 });
 
-      // Add to orientation history
       this.addToHistory(this.orientationHistory, handLandmarks, this.maxOrientationHistory);
-
-      // Calculate gesture metrics
       const { allX, allY } = this.findFingerPositions(handLandmarks);
       const { fourX, fourY, thumbDist } = this.thumbDistanceToOthers(handLandmarks);
       const { pinchDist, threeX, threeY } = this.pinchDistances(handLandmarks);
 
-      // Get thumb-middle finger vector
       const thumbTip = handLandmarks[4];
       const middleTip = handLandmarks[12];
       const currVec = [middleTip.x - thumbTip.x, middleTip.y - thumbTip.y];
 
-      // Gesture detection logic
       if (allX < 0.2 && allY < 0.2 && pinchDist < 0.7 && thumbDist < 0.35) {
-        // Closed fist detected
         this.zoomHistory = [];
         this.rotationHistory = [];
 
@@ -112,7 +94,6 @@ class RunGestures {
 
       } else if (this.zooming === 0 && this.rotating === 0 && this.closedFist &&
                   thumbDist > 0.5 && threeX < 0.08 && threeY < 0.25 && fourY > 0.31) {
-        // Zoom gesture detected
         this.zoomHistory = [];
         this.closedFist = false;
 
@@ -132,7 +113,6 @@ class RunGestures {
 
       } else if (this.zooming === 0 && this.rotating === 0 && this.closedFist &&
                   thumbDist > 0.7 && fourX < 0.1 && fourY < 0.27) {
-        // Rotation gesture detected
         this.rotationHistory = [];
         this.closedFist = false;
 
@@ -148,7 +128,6 @@ class RunGestures {
         this.logger.addLog("Rotation motion detected");
 
       } else if (this.zooming !== 0) {
-        // Continue zooming
         this.addToHistory(this.zoomHistory, [frameTime, pinchDist], this.maxZoomHistory);
 
         if (this.zooming === 1) {
@@ -175,7 +154,6 @@ class RunGestures {
         }
 
       } else if (this.rotating !== 0) {
-        // Continue rotating
         const angle = this.getAngleBetweenVectors(currVec, this.initialVec);
         this.addToHistory(this.rotationHistory, [frameTime, angle], this.maxRotationHistory);
 
@@ -190,7 +168,6 @@ class RunGestures {
           const angularSpeed = deltaAngle / deltaTime;
           const incrementalAngle = angularSpeed * (t2 - t1);
 
-          // Calculate rotation axis
           const v1_3d = [currVec[0], currVec[1], 0];
           const v2_3d = [this.initialVec[0], this.initialVec[1], 0];
           let axis = this.crossProduct(v1_3d, v2_3d);
@@ -218,15 +195,14 @@ class RunGestures {
     this.canvasCtx.restore();
   }
 
-  // Helper method to add items to history arrays with max length
+  // ---- HELPER FUNCTIONS -----
+
   addToHistory(historyArray, item, maxLength) {
     historyArray.push(item);
     if (historyArray.length > maxLength) {
       historyArray.shift();
     }
   }
-
-  // ---- HELPER FUNCTIONS -----
 
   // Calculate 2D distance between two points
   distance2D(p1, p2) {

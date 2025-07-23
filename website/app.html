@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 
+    <script src="gestures.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- Format-specific loaders (include as needed): -->
@@ -379,20 +381,6 @@
 
             <!-- Log Section -->
             <div id="log-section">
-                <!-- <div id="log-header">
-                    <span>Action Log</span>
-                    <button id="log-clear" onclick="clearLog()">Clear</button>
-                </div>
-                <div id="log-content" id="log-display">
-                    <div class="log-entry">
-                        <span class="log-timestamp">[00:00:00]</span>
-                        <span class="log-action">System initialized</span>
-                    </div>
-                    <div class="log-entry">
-                        <span class="log-timestamp">[00:00:01]</span>
-                        <span class="log-action">Waiting for hand detection...</span>
-                    </div>
-                </div> -->
                 <div id="log-header">
                     <span>Action Log</span>
                 </div>
@@ -418,11 +406,11 @@
                 </div>
 
                 <!-- Scene controls -->
-                <div id="scene-controls">
+                <!-- <div id="scene-controls">
                     <button class="scene-button" onclick="resetScene()">Reset</button>
                     <button class="scene-button" onclick="switchModel()">Switch Model</button>
                     <button class="scene-button" onclick="toggleWireframe()">Wireframe</button>
-                </div>
+                </div> -->
 
                 <!-- Performance indicator -->
                 <div id="performance-indicator">
@@ -436,21 +424,36 @@
     <script>
         // Placeholder functions - replace with your actual implementations
 
-        function exitApp() {
-            console.log('Exiting application...');
-            // Navigate back to landing page
-            window.location.href = 'index.html';
+        const path = window.location.pathname;
+
+        if (path === '/xbox') {
+            console.log("Xbox mode active");
+            const app = new RunGestures("objects/XBOX.obj");
+        } else if (path === '/mouse') {
+            console.log("Mouse mode active");
+            const app = new RunGestures("objects/mouse.obj")
+        } else if (path === '/uploaded') {
+            console.log("Upload mode active");
+            const app = new RunGestures("objects/uploaded.obj")
+        } else {
+            console.warn("Unknown mode");
+            window.location.href = '/home'
         }
 
-        function clearLog() {
-            const logContent = document.getElementById('log-content');
-            logContent.innerHTML = `
-                <div class="log-entry">
-                    <span class="log-timestamp">[${getCurrentTimestamp()}]</span>
-                    <span class="log-action">Log cleared</span>
-                </div>
-            `;
+        function exitApp() {
+            console.log('Exiting application...');
+            window.location.href = '/home';
         }
+
+        // function clearLog() {
+        //     const logContent = document.getElementById('log-content');
+        //     logContent.innerHTML = `
+        //         <div class="log-entry">
+        //             <span class="log-timestamp">[${getCurrentTimestamp()}]</span>
+        //             <span class="log-action">Log cleared</span>
+        //         </div>
+        //     `;
+        // }
 
         function addLogEntry(action) {
             const logContent = document.getElementById('log-content');
@@ -479,30 +482,10 @@
             addLogEntry('Model switched');
         }
 
-        function toggleWireframe() {
-            console.log('Toggling wireframe mode...');
-            addLogEntry('Wireframe toggled');
-        }
-
-        // Simulate some log updates for demo purposes
-        function simulateLogUpdates() {
-            const actions = [
-                'Hand detected',
-                'Gesture: Open palm',
-                'Object rotation: X-axis',
-                'Gesture: Closed fist',
-                'Object translation',
-                'Gesture: Peace sign',
-                'Scale adjustment'
-            ];
-
-            setInterval(() => {
-                if (Math.random() > 0.7) { // Random chance to add log entry
-                    const randomAction = actions[Math.floor(Math.random() * actions.length)];
-                    addLogEntry(randomAction);
-                }
-            }, 2000);
-        }
+        // function toggleWireframe() {
+        //     console.log('Toggling wireframe mode...');
+        //     addLogEntry('Wireframe toggled');
+        // }
 
         // Initialize demo
         window.addEventListener('load', () => {
@@ -513,17 +496,14 @@
                 document.getElementById('camera-status').className = 'status-active';
                 addLogEntry('Camera initialized');
                 addLogEntry('3D scene loaded');
-                
-                // Start demo log updates
-                simulateLogUpdates();
             }, 2000);
 
             // Simulate FPS counter
-            let fps = 60;
-            setInterval(() => {
-                fps = 55 + Math.floor(Math.random() * 10);
-                document.getElementById('fps-counter').textContent = fps;
-            }, 1000);
+            // let fps = 60;
+            // setInterval(() => {
+            //     fps = 55 + Math.floor(Math.random() * 10);
+            //     document.getElementById('fps-counter').textContent = fps;
+            // }, 1000);
         });
 
         // TODO: Integrate your actual functionality here:

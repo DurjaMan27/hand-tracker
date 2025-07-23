@@ -324,22 +324,14 @@
 
     <script>
         function startXboxMode() {
-            console.log('Xbox mode selected');
-            // TODO: Navigate to Xbox controller simulation page
-            alert('Xbox controller simulation - Coming soon!');
+            window.location.href = '/xbox';
         }
-
         function startMouseMode() {
-            console.log('Mouse mode selected');
-            // TODO: Navigate to mouse control page
-            alert('Mouse control mode - Coming soon!');
+            window.location.href = '/mouse';
         }
 
         function startUploadMode() {
-            console.log('Upload mode selected');
-            // TODO: Navigate to custom object upload page
-            // This could navigate to your existing hand tracking app
-            window.location.href = 'app.html'; // or whatever you name your main app file
+            window.location.href = '/uploaded';
         }
     </script>
 </body>
