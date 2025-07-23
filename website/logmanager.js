@@ -1,4 +1,4 @@
-class LogManager {
+export class LogManager {
   constructor(displayElementId, maxEntries = 50) {
     this.logs = [];
     this.displayElement = document.getElementById(displayElementId)

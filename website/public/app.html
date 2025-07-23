@@ -367,15 +367,7 @@
             <!-- Camera Section -->
             <div id="camera-section">
                 <div id="camera-preview">
-                    <div id="camera-status" class="status-inactive">Camera: Inactive</div>
-                    <div id="overlay-indicator">MediaPipe: Ready</div>
-                    <div id="camera-placeholder">
-                        Camera Preview<br>
-                        <small style="color: #666;">MediaPipe hand tracking overlays will appear here</small>
-                    </div>
-                    <!-- Actual camera feed will be inserted here -->
-                    <!-- <video id="camera-video" autoplay muted playsinline></video> -->
-                    <!-- <canvas id="camera-overlay"></canvas> -->
+                    <div id="video-container"></div>
                 </div>
             </div>
 
@@ -384,33 +376,15 @@
                 <div id="log-header">
                     <span>Action Log</span>
                 </div>
-                <div id="log-content" id="log-display">
-                    <div id="gesture-log" class="log-display"></div>
-                </div>
+                <div id="gesture-log">
             </div>
         </div>
 
         <div id="right-section">
             <!-- 3D Scene Container -->
             <div id="scene-container">
-                <!-- Loading overlay -->
-                <div id="scene-loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading 3D Scene...</p>
-                </div>
 
-                <!-- 3D scene will be rendered here -->
-                <div id="scene-placeholder">
-                    3D Object Visualization<br>
-                    <small>Your 3D models will be rendered here</small>
-                </div>
-
-                <!-- Scene controls -->
-                <!-- <div id="scene-controls">
-                    <button class="scene-button" onclick="resetScene()">Reset</button>
-                    <button class="scene-button" onclick="switchModel()">Switch Model</button>
-                    <button class="scene-button" onclick="toggleWireframe()">Wireframe</button>
-                </div> -->
+                <div id="three-container"></div>
 
                 <!-- Performance indicator -->
                 <div id="performance-indicator">
@@ -421,97 +395,7 @@
         </div>
     </div>
 
-    <script>
-        // Placeholder functions - replace with your actual implementations
+    <script type="module" src="./main.js"></script>
 
-        const path = window.location.pathname;
-
-        if (path === '/xbox') {
-            console.log("Xbox mode active");
-            const app = new RunGestures("objects/XBOX.obj");
-        } else if (path === '/mouse') {
-            console.log("Mouse mode active");
-            const app = new RunGestures("objects/mouse.obj")
-        } else if (path === '/uploaded') {
-            console.log("Upload mode active");
-            const app = new RunGestures("objects/uploaded.obj")
-        } else {
-            console.warn("Unknown mode");
-            window.location.href = '/home'
-        }
-
-        function exitApp() {
-            console.log('Exiting application...');
-            window.location.href = '/home';
-        }
-
-        // function clearLog() {
-        //     const logContent = document.getElementById('log-content');
-        //     logContent.innerHTML = `
-        //         <div class="log-entry">
-        //             <span class="log-timestamp">[${getCurrentTimestamp()}]</span>
-        //             <span class="log-action">Log cleared</span>
-        //         </div>
-        //     `;
-        // }
-
-        function addLogEntry(action) {
-            const logContent = document.getElementById('log-content');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `
-                <span class="log-timestamp">[${getCurrentTimestamp()}]</span>
-                <span class="log-action">${action}</span>
-            `;
-            logContent.appendChild(entry);
-            logContent.scrollTop = logContent.scrollHeight;
-        }
-
-        function getCurrentTimestamp() {
-            const now = new Date();
-            return now.toTimeString().split(' ')[0];
-        }
-
-        function resetScene() {
-            console.log('Resetting 3D scene...');
-            addLogEntry('Scene reset');
-        }
-
-        function switchModel() {
-            console.log('Switching 3D model...');
-            addLogEntry('Model switched');
-        }
-
-        // function toggleWireframe() {
-        //     console.log('Toggling wireframe mode...');
-        //     addLogEntry('Wireframe toggled');
-        // }
-
-        // Initialize demo
-        window.addEventListener('load', () => {
-            // Hide loading overlay after 2 seconds (simulate loading)
-            setTimeout(() => {
-                document.getElementById('scene-loading').style.display = 'none';
-                document.getElementById('camera-status').textContent = 'Camera: Active';
-                document.getElementById('camera-status').className = 'status-active';
-                addLogEntry('Camera initialized');
-                addLogEntry('3D scene loaded');
-            }, 2000);
-
-            // Simulate FPS counter
-            // let fps = 60;
-            // setInterval(() => {
-            //     fps = 55 + Math.floor(Math.random() * 10);
-            //     document.getElementById('fps-counter').textContent = fps;
-            // }, 1000);
-        });
-
-        // TODO: Integrate your actual functionality here:
-        // - Camera initialization and MediaPipe setup
-        // - Three.js 3D scene setup
-        // - Hand tracking event handlers
-        // - Log file reading and real-time updates
-        // - 3D object manipulation based on hand movements
-    </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+
 class Interactive {
   constructor(meshData, scene, renderer, camera) {
     // Three.js dependencies - passed from parent application
@@ -19,6 +21,37 @@ class Interactive {
     // Add mesh to scene
     this.scene.add(this.mesh);
   }
+
+  static async loadObjMeshDataFromPath(path) {
+    const loader = new OBJLoader();
+
+    return new Promise((resolve, reject) => {
+      loader.load(
+        path,
+        obj => {
+          // Assume first mesh in the loaded object
+          const mesh = obj.children.find(child => child.isMesh);
+
+          const geometry = mesh.geometry.isBufferGeometry
+            ? new THREE.Geometry().fromBufferGeometry(mesh.geometry)
+            : mesh.geometry;
+
+          const vertices = geometry.vertices.map(v => [v.x, v.y, v.z]);
+          const faces = geometry.faces.map(f => [f.a, f.b, f.c]);
+
+          resolve({ vertices, faces });
+        },
+        undefined,
+        err => reject(err)
+      );
+    });
+  };
+
+  getModelTypeFromPath() {
+    const path = window.location.pathname;
+    const parts = path.split('/');
+    return parts[1] || 'default'; // e.g., 'xbox', 'ps5', etc.
+  };
 
   // Create Three.js mesh from loaded mesh data
   createMeshFromData(meshData) {
@@ -331,3 +364,5 @@ meshLoader.loadMesh('path/to/your/model.obj', 'obj')
   })
   .catch(error => console.error('Failed to load mesh:', error));
 */
+
+export { Interactive };

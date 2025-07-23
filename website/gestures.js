@@ -1,4 +1,4 @@
-class RunGestures {
+export class RunGestures {
   constructor(interactive_obj) {
     this.interactive = interactive_obj;
 
@@ -49,9 +49,13 @@ class RunGestures {
     this.canvasElement = canvasElement;
     this.canvasCtx = canvasElement.getContext('2d');
 
-    this.camera = new Camera(videoElement, {
+    const container = this.interactive.videoElement;
+    container.appendChild(this.videoElement);
+    container.appendChild(this.canvasElement);
+
+    this.camera = new Camera(this.videoElement, {
       onFrame: async () => {
-        await this.hands.send({ image: videoElement });
+        await this.hands.send({ image: this.videoElement });
       },
       width: 600,
       height: 500
