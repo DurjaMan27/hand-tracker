@@ -2,9 +2,9 @@
   "name": "website",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "public/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +12,8 @@
   "dependencies": {
     "express": "^5.1.0",
     "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
 }

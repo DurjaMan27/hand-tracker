@@ -5,249 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hand Tracking 3D Controller</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #container {
-            display: flex;
-            height: 100vh;
-            position: relative;
-        }
-
-        #left-section {
-            width: 35%;
-            background: white;
-            border-radius: 0 30px 30px 0;
-            position: relative;
-            z-index: 10;
-            box-shadow: 20px 0 40px rgba(0, 0, 0, 0.15);
-            overflow-y: auto;
-            padding: 60px 50px;
-        }
-
-        #right-section {
-            width: 65%;
-            background: #222222;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #content {
-            color: #333;
-            line-height: 1.8;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 300;
-            margin-bottom: 30px;
-            color: #1a1a1a;
-            letter-spacing: -2px;
-        }
-
-        .highlight {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        h2 {
-            font-size: 1.8rem;
-            margin: 40px 0 20px 0;
-            color: #2c2c2c;
-            font-weight: 400;
-        }
-
-        p {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            color: #555;
-        }
-
-        .feature-list {
-            margin: 30px 0;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .feature-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .feature-description {
-            font-size: 0.95rem;
-            color: #666;
-        }
-
-        #button-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .control-button {
-            display: block;
-            width: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            color: white;
-            padding: 20px 40px;
-            margin: 15px 0;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .control-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.6s;
-        }
-
-        .control-button:hover::before {
-            left: 100%;
-        }
-
-        .control-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, #7c8ef7, #8a5cb8);
-        }
-
-        .control-button:active {
-            transform: translateY(-1px);
-        }
-
-        .tech-stack {
-            margin: 40px 0;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border-left: 4px solid #667eea;
-        }
-
-        .tech-title {
-            font-size: 1.2rem;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .tech-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tech-item {
-            background: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            color: #555;
-            border: 1px solid #e0e0e0;
-            font-weight: 500;
-        }
-
-        .demo-note {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 30px 0;
-            text-align: center;
-        }
-
-        .demo-note h3 {
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .demo-note p {
-            color: rgba(255, 255, 255, 0.9);
-            margin: 0;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; height: 100vh; overflow: hidden; }
+        #container { display: flex; height: 100vh; position: relative; }
+        #left-section { width: 45%; background: white; border-radius: 0 30px 30px 0; position: relative; z-index: 10; box-shadow: 20px 0 40px rgba(0, 0, 0, 0.15); overflow-y: auto; padding: 60px 50px; }
+        #right-section { width: 55%; background: #222222; position: relative; display: flex; justify-content: center; align-items: center; }
+        #content { color: #333; line-height: 1.8; }
+        h1 { font-size: 3.5rem; font-weight: 300; margin-bottom: 30px; color: #1a1a1a; letter-spacing: -2px; }
+        .highlight { color: #667eea; font-weight: 600; }
+        h2 { font-size: 1.8rem; margin: 40px 0 20px 0; color: #2c2c2c; font-weight: 400; }
+        p { font-size: 1.1rem; margin-bottom: 20px; color: #555; }
+        .feature-list { margin: 30px 0; }
+        .feature-item { display: flex; align-items: center; margin: 15px 0; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
+        .feature-icon { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; margin-right: 20px; color: white; font-weight: bold; }
+        .feature-text { flex: 1; }
+        .feature-title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .feature-description { font-size: 0.95rem; color: #666; }
+        #button-container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border-radius: 25px; padding: 40px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .control-button { display: block; width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; padding: 20px 40px; margin: 15px 0; border-radius: 15px; cursor: pointer; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.4s ease; position: relative; overflow: hidden; }
+        .control-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); transition: left 0.6s; }
+        .control-button:hover::before { left: 100%; }
+        .control-button:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); background: linear-gradient(135deg, #7c8ef7, #8a5cb8); }
+        .control-button:active { transform: translateY(-1px); }
+        .tech-stack { margin: 40px 0; padding: 25px; background: #f8f9fa; border-radius: 15px; border-left: 4px solid #667eea; }
+        .tech-title { font-size: 1.2rem; color: #333; margin-bottom: 15px; font-weight: 600; }
+        .tech-items { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tech-item { background: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; color: #555; border: 1px solid #e0e0e0; font-weight: 500; }
+        .demo-note { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 15px; margin: 30px 0; text-align: center; }
+        .demo-note h3 { margin-bottom: 10px; font-weight: 600; }
+        .demo-note p { color: rgba(255, 255, 255, 0.9); margin: 0; }
         /* Custom scrollbar for left section */
-        #left-section::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #left-section::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        #left-section::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 4px;
-        }
-
-        #left-section::-webkit-scrollbar-thumb:hover {
-            background: #5a6fd8;
-        }
+        #left-section::-webkit-scrollbar { width: 8px; }
+        #left-section::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        #left-section::-webkit-scrollbar-thumb { background: #667eea; border-radius: 4px; }
+        #left-section::-webkit-scrollbar-thumb:hover { background: #5a6fd8; }
+        /* App page styles (from app.html) */
+        #camera-section, #scene-container, #log-section { display: none; }
+        .app-active #camera-section, .app-active #scene-container, .app-active #log-section { display: block; }
+        .app-active #container { flex-direction: row; }
+        .app-active #left-section, .app-active #right-section { width: 50%; }
+        .app-active #button-container, .app-active #content, .app-active .tech-stack, .app-active .feature-list, .app-active .demo-note, .app-active h2, .app-active h1, .app-active p { display: none !important; }
     </style>
 </head>
 <body>
     <div id="container">
+        <!-- ================= LANDING PAGE SECTION ================= -->
         <div id="left-section">
             <div id="content">
-                <h1>Hand Tracking <span class="highlight">3D Controller</span></h1>
-                
+                <h1><span class="highlight">3Define</span></h1>
                 <p>Experience the future of human-computer interaction with our cutting-edge hand tracking technology. Control 3D objects in real-time using nothing but your hand movements, captured through your webcam.</p>
-
                 <h2>How It Works</h2>
                 <p>Our application uses advanced computer vision algorithms to detect and track your hand movements in real-time. The system maps your hand gestures to 3D object transformations, creating an intuitive and immersive control experience.</p>
-
                 <div class="feature-list">
                     <div class="feature-item">
                         <div class="feature-icon">1</div>
@@ -256,7 +64,6 @@
                             <div class="feature-description">Advanced MediaPipe technology tracks 21 hand landmarks with precision</div>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">2</div>
                         <div class="feature-text">
@@ -264,7 +71,6 @@
                             <div class="feature-description">Seamlessly control position, rotation, and scale of 3D models</div>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">3</div>
                         <div class="feature-text">
@@ -273,7 +79,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="tech-stack">
                     <div class="tech-title">Built With Modern Web Technologies</div>
                     <div class="tech-items">
@@ -285,34 +90,25 @@
                         <span class="tech-item">HTML5 Canvas</span>
                     </div>
                 </div>
-
                 <h2>Features</h2>
                 <p><strong>Gesture Recognition:</strong> Our system recognizes complex hand gestures and translates them into meaningful 3D transformations. Whether you're rotating, scaling, or translating objects, the controls feel natural and responsive.</p>
-
                 <p><strong>Real-Time Performance:</strong> Optimized algorithms ensure smooth 60fps performance, providing immediate visual feedback for every hand movement.</p>
-
                 <p><strong>Cross-Platform Compatibility:</strong> Works on any modern web browser with webcam support - no additional software installation required.</p>
-
                 <div class="demo-note">
                     <h3>🚀 Ready to Get Started?</h3>
                     <p>Choose your preferred control mode from the options on the right and dive into the future of gesture-based computing!</p>
                 </div>
-
                 <h2>Applications</h2>
                 <p>This technology has applications in gaming, education, virtual reality, accessibility tools, and creative design. From controlling game characters to manipulating 3D models in design software, hand tracking opens up new possibilities for intuitive interaction.</p>
-
                 <p><strong>Gaming:</strong> Control game elements without traditional input devices</p>
                 <p><strong>Education:</strong> Interactive learning through gesture-based exploration</p>
                 <p><strong>Design:</strong> Intuitive 3D model manipulation for creators</p>
                 <p><strong>Accessibility:</strong> Alternative input method for users with mobility limitations</p>
-
                 <h2>Technical Specifications</h2>
                 <p>The system operates using your device's built-in webcam and requires no special hardware. It utilizes MediaPipe's machine learning models for hand landmark detection and Three.js for high-performance 3D rendering.</p>
-
                 <p>Minimum requirements: Modern web browser (Chrome, Firefox, Safari, Edge), webcam access, and JavaScript enabled. For optimal performance, we recommend a device with dedicated graphics capabilities.</p>
             </div>
         </div>
-        
         <div id="right-section">
             <div id="button-container">
                 <button class="control-button" onclick="startXboxMode()">XBOX</button>
@@ -321,17 +117,41 @@
                 <input type="file" id="obj-upload" accept=".obj" style="display:none" />
             </div>
         </div>
-    </div>
+        <!-- ================= END LANDING PAGE SECTION ================= -->
 
+        <!-- ================= APP PAGE SECTION (hidden by default) ================= -->
+        <div id="camera-section">
+            <div id="camera-preview">
+                <div id="video-container"></div>
+            </div>
+        </div>
+        <div id="log-section">
+            <div id="log-header">
+                <span>Action Log</span>
+            </div>
+            <div id="gesture-log"></div>
+        </div>
+        <div id="scene-container">
+            <div id="three-container"></div>
+            <div id="performance-indicator">
+                <div>FPS: <span id="fps-counter">60</span></div>
+                <div>Objects: <span id="object-count">1</span></div>
+            </div>
+        </div>
+        <!-- ================= END APP PAGE SECTION ================= -->
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script type="module" src="./main.js"></script>
     <script>
+        // LANDING PAGE BUTTON LOGIC
         function startXboxMode() {
-            window.location.href = '/xbox';
+            window.location.href = '?object=xbox';
         }
         function startMouseMode() {
-            window.location.href = '/mouse';
+            window.location.href = '?object=mouse';
         }
-
-        // Upload logic
         document.getElementById('upload-btn').onclick = function() {
             document.getElementById('obj-upload').click();
         };
@@ -340,13 +160,29 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Store the OBJ file contents in sessionStorage
                     sessionStorage.setItem('uploadedOBJ', e.target.result);
-                    window.location.href = '/uploaded';
+                    window.location.href = '?object=uploaded';
                 };
                 reader.readAsText(file);
             }
         });
+        // PAGE SWITCHING LOGIC
+        function showAppPage() {
+            document.getElementById('container').classList.add('app-active');
+        }
+        function showLandingPage() {
+            document.getElementById('container').classList.remove('app-active');
+        }
+        // On load, show the correct section
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const object = params.get('object');
+            if (object === 'xbox' || object === 'mouse' || object === 'uploaded') {
+                showAppPage();
+            } else {
+                showLandingPage();
+            }
+        })();
     </script>
 </body>
-</html>
+</html> 

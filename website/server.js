@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(__dirname));
 
 // Route for the home page
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -16,10 +16,9 @@ app.get('/home', (req, res) => {
 app.get('/:object_name', (req, res) => {
   const objectName = req.params.object_name.toLowerCase();
   if (objectName === 'xbox' || objectName === 'mouse') {
-    // Pass the object name as a query parameter for the frontend
     res.sendFile(path.join(__dirname, 'app.html'));
   } else {
-    res.redirect('/home');
+    res.redirect('/');
   }
 });
 

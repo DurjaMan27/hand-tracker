@@ -2,78 +2,322 @@
 // This file runs in the browser and implements the hand tracking loop using MediaPipe Hands.
 // It connects to the UI in app.html and uses RunGestures for gesture logic.
 
-import { Hands } from 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
-import { Camera } from 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js';
-// Import drawing utils if needed
-import { drawConnectors, drawLandmarks, HAND_CONNECTIONS } from 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js';
+// MediaPipe libraries are now loaded globally via <script> tags in index.html
+// Use Hands, Camera, drawConnectors, drawLandmarks, HAND_CONNECTIONS as globals
 import { Interactive } from './object_parsing.js';
 
 // Three.js setup
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-import { OBJLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/OBJLoader.js';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
-const threeContainer = document.getElementById('three-container');
-const scene = new THREE.Scene();
-const camera3D = new THREE.PerspectiveCamera(75, threeContainer.offsetWidth / threeContainer.offsetHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(threeContainer.offsetWidth, threeContainer.offsetHeight);
-threeContainer.appendChild(renderer.domElement);
-camera3D.position.z = 5;
-
-// Determine which object to load based on the URL
-function getObjectNameFromPath() {
-  const path = window.location.pathname.toLowerCase();
-  if (path === '/xbox') return 'XBOX.obj';
-  if (path === '/mouse') return 'mouse.obj';
-  return null;
-}
-
-const path = window.location.pathname.toLowerCase();
+let runGestures = null;
 let interactive = null;
 
-if (path === '/uploaded') {
-  // Load OBJ from sessionStorage
-  const objText = sessionStorage.getItem('uploadedOBJ');
-  if (!objText) {
-    alert('No uploaded OBJ file found. Please upload a file from the home page.');
-    window.location.href = '/home';
-  } else {
-    // Parse and add the uploaded OBJ to the scene
-    const loader = new OBJLoader();
-    const object = loader.parse(objText);
-    // Remove any previous objects from the scene
-    while (scene.children.length > 0) scene.remove(scene.children[0]);
-    scene.add(object);
-    // Optionally, wrap in Interactive if you want to use the same interface
-    interactive = {
-      zoom: (factor) => object.scale.multiplyScalar(1 + factor * 0.05),
-      rotate: (axis, angle) => {
-        const axisVec = new THREE.Vector3(...axis);
-        axisVec.normalize();
-        object.rotateOnAxis(axisVec, angle);
-      }
-    };
-    animate();
-  }
-} else {
-  const objectFile = getObjectNameFromPath();
-  if (!objectFile) {
-    // Should not happen, as server redirects, but just in case
-    throw new Error('Invalid object route');
-  }
-  const objPath = `./objects/${objectFile}`;
-  interactive = new Interactive(objPath, scene, (mesh) => {
-    animate();
+function createAppLayout() {
+  // Remove old app sections if they exist
+  const oldApp = document.getElementById('app-root');
+  if (oldApp) oldApp.remove();
+
+  // Create root container
+  const appRoot = document.createElement('div');
+  appRoot.id = 'app-root';
+  appRoot.style.display = 'flex';
+  appRoot.style.width = '100vw';
+  appRoot.style.height = '100vh';
+  appRoot.style.position = 'fixed';
+  appRoot.style.top = '0';
+  appRoot.style.left = '0';
+  appRoot.style.zIndex = '1000';
+
+  // Left section (white, 40%)
+  const left = document.createElement('div');
+  left.style.width = '40%';
+  left.style.background = '#fff';
+  left.style.display = 'flex';
+  left.style.flexDirection = 'column';
+  left.style.justifyContent = 'space-between';
+  left.style.height = '100%';
+  left.style.boxShadow = '2px 0 10px rgba(0,0,0,0.08)';
+  left.style.position = 'relative';
+
+  // Navbar
+  const navbar = document.createElement('div');
+  navbar.style.height = '60px';
+  navbar.style.display = 'flex';
+  navbar.style.alignItems = 'center';
+  navbar.style.justifyContent = 'flex-start';
+  navbar.style.padding = '0 24px';
+  navbar.style.borderBottom = '1px solid #eee';
+  navbar.style.background = '#fff';
+  // EXIT button
+  const exitBtn = document.createElement('button');
+  exitBtn.textContent = 'EXIT';
+  exitBtn.style.background = '#222';
+  exitBtn.style.color = '#fff';
+  exitBtn.style.border = 'none';
+  exitBtn.style.borderRadius = '6px';
+  exitBtn.style.padding = '10px 24px';
+  exitBtn.style.fontWeight = 'bold';
+  exitBtn.style.cursor = 'pointer';
+  exitBtn.onclick = () => { window.location.href = '/'; };
+  navbar.appendChild(exitBtn);
+  left.appendChild(navbar);
+
+  // Camera preview (centered)
+  const camWrapper = document.createElement('div');
+  camWrapper.style.flex = '1';
+  camWrapper.style.display = 'flex';
+  camWrapper.style.alignItems = 'center';
+  camWrapper.style.justifyContent = 'center';
+  camWrapper.style.position = 'relative';
+  // Camera container
+  const videoContainer = document.createElement('div');
+  videoContainer.id = 'video-container';
+  videoContainer.style.position = 'relative';
+  videoContainer.style.width = '500px'; // Reduced width
+  videoContainer.style.height = '375px'; // Reduced height
+  videoContainer.style.background = '#222';
+  videoContainer.style.borderRadius = '12px';
+  videoContainer.style.overflow = 'hidden';
+  camWrapper.appendChild(videoContainer);
+  left.appendChild(camWrapper);
+
+  // Log section (bottom)
+  const logSection = document.createElement('div');
+  logSection.style.height = '140px'; // Reduced height
+  logSection.style.background = '#f8f8f8';
+  logSection.style.borderTop = '1px solid #eee';
+  logSection.style.padding = '12px 18px 18px 18px'; // Reduced padding
+  logSection.style.marginBottom = '10px'; // Reduced margin
+  logSection.style.overflowY = 'auto';
+  logSection.style.fontSize = '1.02rem';
+  logSection.style.color = '#333';
+  logSection.style.fontFamily = 'monospace';
+  logSection.id = 'gesture-log';
+  left.appendChild(logSection);
+
+  // Right section (black, 60%)
+  const right = document.createElement('div');
+  right.style.width = '60%';
+  right.style.background = '#111';
+  right.style.height = '100%';
+  right.style.display = 'flex';
+  right.style.alignItems = 'center';
+  right.style.justifyContent = 'center';
+  right.style.position = 'relative';
+  // 3D container
+  const threeContainer = document.createElement('div');
+  threeContainer.id = 'three-container';
+  threeContainer.style.width = '90%';
+  threeContainer.style.height = '90%';
+  threeContainer.style.background = 'transparent';
+  right.appendChild(threeContainer);
+
+  // Add to root
+  appRoot.appendChild(left);
+  appRoot.appendChild(right);
+  document.body.appendChild(appRoot);
+
+  // Return references for use in initialization
+  return { videoContainer, threeContainer, logSection };
+}
+
+// Only initialize the 3D scene and object loading when we're on the app page
+function initializeApp() {
+  // Remove old app-root if present
+  if (document.getElementById('app-root')) document.getElementById('app-root').remove();
+  // Create new layout
+  const { videoContainer, threeContainer, logSection } = createAppLayout();
+
+  // Three.js setup
+  const scene = new THREE.Scene();
+  const camera3D = new THREE.PerspectiveCamera(75, threeContainer.offsetWidth / threeContainer.offsetHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(threeContainer.offsetWidth, threeContainer.offsetHeight);
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  threeContainer.appendChild(renderer.domElement);
+  camera3D.position.set(0, 0, 3);
+
+  // Add lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(5, 10, 7.5);
+  scene.add(dirLight);
+
+  // Responsive resize
+  window.addEventListener('resize', () => {
+    const width = threeContainer.offsetWidth;
+    const height = threeContainer.offsetHeight;
+    renderer.setSize(width, height);
+    camera3D.aspect = width / height;
+    camera3D.updateProjectionMatrix();
   });
+
+  // Determine which object to load based on the URL query parameters
+  function getObjectNameFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const object = params.get('object');
+    if (object === 'xbox') return 'XBOX.obj';
+    if (object === 'mouse') return 'mouse.obj';
+    return null;
+  }
+
+  // Load 3D object
+  const params = new URLSearchParams(window.location.search);
+  const object = params.get('object');
+  if (object === 'uploaded') {
+    const objText = sessionStorage.getItem('uploadedOBJ');
+    if (!objText) {
+      alert('No uploaded OBJ file found. Please upload a file from the home page.');
+      window.location.href = '/';
+      return;
+    } else {
+      const loader = new OBJLoader();
+      const object = loader.parse(objText);
+      while (scene.children.length > 0) scene.remove(scene.children[0]);
+      scene.add(object);
+      // Center and scale the object
+      object.traverse(function(child) {
+        if (child.isMesh) {
+          child.geometry.computeBoundingBox();
+          const box = child.geometry.boundingBox;
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 1.5 / maxDim;
+          child.scale.set(scale, scale, scale);
+          const center = box.getCenter(new THREE.Vector3());
+          child.position.sub(center);
+        }
+      });
+      interactive = {
+        zoom: (factor) => object.scale.multiplyScalar(1 + factor * 0.05),
+        rotate: (axis, angle) => {
+          const axisVec = new THREE.Vector3(...axis);
+          axisVec.normalize();
+          object.rotateOnAxis(axisVec, angle);
+        }
+      };
+      animate();
+    }
+  } else {
+    const objectFile = getObjectNameFromQuery();
+    if (!objectFile) {
+      console.error('Invalid object parameter');
+      return;
+    }
+    const objPath = `/objects/${objectFile}`;
+    interactive = new Interactive(objPath, scene, (mesh) => {
+      // Center and scale the mesh
+      if (mesh && mesh.geometry) {
+        mesh.geometry.computeBoundingBox();
+        const box = mesh.geometry.boundingBox;
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1.5 / maxDim;
+        mesh.scale.set(scale, scale, scale);
+        const center = box.getCenter(new THREE.Vector3());
+        mesh.position.sub(center);
+      }
+      animate();
+    });
+  }
+
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera3D);
+  }
+
+  // Hand tracking setup
+  initializeHandTracking(videoContainer, logSection);
 }
 
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera3D);
+// Update initializeHandTracking to accept videoContainer and logSection
+function initializeHandTracking(videoContainer, logSection) {
+  // HTML elements
+  const videoElement = document.createElement('video');
+  videoElement.autoplay = true;
+  videoElement.muted = true;
+  videoElement.playsInline = true;
+  videoElement.style.position = 'absolute';
+  videoElement.style.top = '0';
+  videoElement.style.left = '0';
+  videoElement.style.width = '100%';
+  videoElement.style.height = '100%';
+  videoElement.style.objectFit = 'cover';
+
+  const canvasElement = document.createElement('canvas');
+  canvasElement.width = 400;
+  canvasElement.height = 300;
+  canvasElement.style.position = 'absolute';
+  canvasElement.style.top = '0';
+  canvasElement.style.left = '0';
+  canvasElement.style.width = '100%';
+  canvasElement.style.height = '100%';
+  canvasElement.style.pointerEvents = 'none';
+
+  videoContainer.style.position = 'relative';
+  videoContainer.style.overflow = 'hidden';
+  videoContainer.appendChild(videoElement);
+  videoContainer.appendChild(canvasElement);
+  const canvasCtx = canvasElement.getContext('2d');
+
+  // MediaPipe Hands setup
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
+  });
+
+  runGestures = new RunGestures(logSection);
+  hands.onResults(onResults);
+
+  function onResults(results) {
+    // Draw the video frame
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      for (const landmarks of results.multiHandLandmarks) {
+        // Draw landmarks
+        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+        drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 1 });
+
+        // Call gesture logic
+        runGestures.processLandmarks(landmarks, performance.now());
+
+        // Example: Draw text overlay
+        canvasCtx.font = '20px Arial';
+        canvasCtx.fillStyle = 'lime';
+        canvasCtx.fillText('Hand Detected', 10, 30);
+      }
+    }
+    canvasCtx.restore();
+  }
+
+  // Camera setup
+  const camera = new Camera(videoElement, {
+    onFrame: async () => {
+      await hands.send({ image: videoElement });
+    },
+    width: 400,
+    height: 300
+  });
+  camera.start();
 }
 
+// Update RunGestures to accept logSection
 class RunGestures {
-  constructor() {
+  constructor(logContainer) {
     this.orientationHistory = [];
     this.zoomHistory = [];
     this.rotationHistory = [];
@@ -83,8 +327,9 @@ class RunGestures {
     this.zooming = 0;
     this.rotating = 0;
     this.MOTION_STOP_THRESHOLD = 0.065;
-    this.GRACE_PERIOD = 1.0;
-    this.logContainer = document.getElementById('gesture-log');
+    this.ANGULAR_STOP_THRESHOLD = 0.2;
+    this.GRACE_PERIOD = 0.8;
+    this.logContainer = logContainer || document.getElementById('gesture-log');
   }
 
   addLog(message) {
@@ -210,7 +455,11 @@ class RunGestures {
       this.rotationHistory = [];
       this.closedFist = false;
       if (this.initialVec === null) {
-        this.initialVec = curr_vec;
+        this.initialVec = [
+          middle_tip.x - thumb_tip.x,
+          middle_tip.y - thumb_tip.y,
+          middle_tip.z - thumb_tip.z
+        ];
       }
       const angle = this.getAngleBetweenVectors(curr_vec, this.initialVec);
       this.rotationHistory.push([frame_time, angle]);
@@ -253,8 +502,12 @@ class RunGestures {
         const angular_speed = delta_angle / delta_time;
         const incremental_angle = angular_speed * (t2 - t1);
         // Calculate axis as cross product of curr_vec and initialVec
-        const v1_3d = [curr_vec[0], curr_vec[1], 0];
-        const v2_3d = [this.initialVec[0], this.initialVec[1], 0];
+        const v1_3d = [
+          middle_tip.x - thumb_tip.x,
+          middle_tip.y - thumb_tip.y,
+          middle_tip.z - thumb_tip.z
+        ];
+        const v2_3d = this.initialVec || v1_3d;
         let axis = [
           v1_3d[1] * v2_3d[2] - v1_3d[2] * v2_3d[1],
           v1_3d[2] * v2_3d[0] - v1_3d[0] * v2_3d[2],
@@ -266,9 +519,9 @@ class RunGestures {
         } else {
           axis = axis.map(x => x / axis_norm);
         }
-        if (interactive) interactive.rotate(axis, incremental_angle); // 3D object is updated live in the animate loop
+        if (interactive) interactive.rotate(axis, incremental_angle * 0.8); // 3D object is updated live in the animate loop
         this.addLog(`Rotating: axis=[${axis.map(x => x.toFixed(2)).join(', ')}], angle=${incremental_angle.toFixed(3)}`);
-        if (Math.abs(angular_speed) > this.MOTION_STOP_THRESHOLD) {
+        if (Math.abs(angular_speed) > this.ANGULAR_STOP_THRESHOLD) {
           this.lastActiveTime = frame_time;
         } else if (frame_time - this.lastActiveTime > this.GRACE_PERIOD) {
           this.rotating = 0;
@@ -290,59 +543,9 @@ function std(arr) {
   return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length);
 }
 
-// HTML elements
-const videoContainer = document.getElementById('video-container');
-const videoElement = document.createElement('video');
-const canvasElement = document.createElement('canvas');
-const canvasCtx = canvasElement.getContext('2d');
-videoContainer.appendChild(videoElement);
-videoContainer.appendChild(canvasElement);
-canvasElement.width = 400;
-canvasElement.height = 300;
-
-// MediaPipe Hands setup
-const hands = new Hands({
-  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-});
-hands.setOptions({
-  maxNumHands: 1,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
-});
-
-hands.onResults(onResults);
-
-function onResults(results) {
-  // Draw the video frame
-  canvasCtx.save();
-  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-  canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-    for (const landmarks of results.multiHandLandmarks) {
-      // Draw landmarks
-      drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-      drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 1 });
-
-      // Call gesture logic
-      runGestures.processLandmarks(landmarks, performance.now());
-
-      // Example: Draw text overlay
-      canvasCtx.font = '20px Arial';
-      canvasCtx.fillStyle = 'lime';
-      canvasCtx.fillText('Hand Detected', 10, 30);
-    }
-  }
-  canvasCtx.restore();
-}
-
-// Camera setup
-const camera = new Camera(videoElement, {
-  onFrame: async () => {
-    await hands.send({ image: videoElement });
-  },
-  width: 400,
-  height: 300
-});
-camera.start(); 
+// Only run app layout if on app page
+const params = new URLSearchParams(window.location.search);
+const object = params.get('object');
+if (object === 'xbox' || object === 'mouse' || object === 'uploaded') {
+  initializeApp();
+} 

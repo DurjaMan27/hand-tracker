@@ -2,8 +2,8 @@
 // JavaScript version of the Interactive class using Three.js for 3D object manipulation
 // This class handles zoom, rotate, update, show, and reset for a 3D object
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-import { OBJLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/OBJLoader.js';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 export class Interactive {
   constructor(objPath, scene, onLoad) {
