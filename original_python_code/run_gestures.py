@@ -8,7 +8,7 @@ import logging
 from collections import deque
 from types import SimpleNamespace
 from datetime import datetime, timedelta
-from object_parsing import Interactive
+from original_python_code.object_parsing import Interactive
 
 class RunGestures():
 

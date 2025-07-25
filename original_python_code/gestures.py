@@ -8,8 +8,8 @@ import time
 from datetime import datetime, timedelta
 import os
 import logging
-from run_gestures import RunGestures
-from object_parsing import Interactive
+from original_python_code.run_gestures import RunGestures
+from original_python_code.object_parsing import Interactive
 
 object = Interactive("objects/XBOX.obj")
 gestures = RunGestures("logs/run_log.log", object)
